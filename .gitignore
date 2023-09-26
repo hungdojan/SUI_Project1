@@ -2,3 +2,7 @@
 *.d
 fc-sui
 test-bin
+compile_commands.json
+build/
+Build/
+.ccls-cache/
