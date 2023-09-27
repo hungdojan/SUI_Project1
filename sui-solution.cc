@@ -27,10 +27,20 @@ std::vector<SearchAction> AStarSearch::solve(const SearchState &init_state) {
     std::map<SearchState, double> gscore;
     std::map<SearchState, double> fscore;
 
+#if PRINT_BOARD
+    std::cout << "### Starting Position ###" << std::endl;
+    std::cout << init_state << std::endl;
+    std::cout << "#########################" << std::endl;
+#endif // PRINT_BOARD
+
     // init the structure
     gscore[init_state] = 0;
     fscore[init_state] = gscore[init_state] + compute_heuristic(init_state, *heuristic_);
     open.push_back(init_state);
+
+#if LOGGING
+    std::cout << "Moves:" << std::endl << std::endl;
+#endif
 
     // TODO: fix the algorithm
     while(!open.empty()) {
@@ -42,6 +52,15 @@ std::vector<SearchAction> AStarSearch::solve(const SearchState &init_state) {
         if (s.isFinal()) {
             return actions;
         }
+
+#if LOGGING
+        std::cout << "------------------------" << std::endl;
+        std::cout << "[" << s.actions()[4] << "]" << std::endl;
+#if PRINT_BOARD
+        std::cout << std::endl << s.actions()[4].execute(s);
+#endif
+        std::cout << "------------------------" << std::endl;
+#endif
 
         // generate new states through actions
         // iterate states/actions

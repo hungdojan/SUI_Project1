@@ -27,16 +27,8 @@ void eval_strategy(
     auto t1 = std::chrono::steady_clock::now();
 
 	SearchState in_progress(init_state);
-#ifdef PRINT_BOARD
-    std::cout << "### Starting Position ###" << std::endl;
-    std::cout << in_progress << std::endl;
-    std::cout << "#########################" << std::endl << std::endl;
-#endif // PRINT_BOARD
 	for (const auto & action : solution) {
 		in_progress = action.execute(in_progress);
-#ifdef PRINT_BOARD
-        std::cout << in_progress << std::endl;
-#endif // PRINT_BOARD
     }
 
     if (in_progress.isFinal()) {
