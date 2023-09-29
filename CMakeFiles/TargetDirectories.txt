@@ -1,0 +1,4 @@
+/home/lenka/Documents/cleanDir/FIT/SUI/proj/proj1/SUI_Project1/CMakeFiles/fc-sui.dir
+/home/lenka/Documents/cleanDir/FIT/SUI/proj/proj1/SUI_Project1/CMakeFiles/test-bin.dir
+/home/lenka/Documents/cleanDir/FIT/SUI/proj/proj1/SUI_Project1/CMakeFiles/edit_cache.dir
+/home/lenka/Documents/cleanDir/FIT/SUI/proj/proj1/SUI_Project1/CMakeFiles/rebuild_cache.dir

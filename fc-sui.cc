@@ -15,6 +15,8 @@
 #include <thread>
 #include <atomic>
 
+#define PRINT_BOARD
+
 
 void eval_strategy(
         std::unique_ptr<SearchStrategyItf> &search_strategy,
@@ -38,6 +40,8 @@ void eval_strategy(
         std::cout << in_progress << std::endl;
 #endif // PRINT_BOARD
     }
+
+    std::cout << "HEre" << std::endl;
 
     if (in_progress.isFinal()) {
         report->nb_solved++;
