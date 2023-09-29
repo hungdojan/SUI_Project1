@@ -1,100 +1,67 @@
 #include "search-strategies.h"
 
 #include <queue>
-#include <unordered_map>
 #include <algorithm>
+#include <set>
 #include <iostream>
 
 using namespace std;
 
-bool operator==(const SearchState &a, const SearchState &b) {
-    return a.state_ == b.state_;
-}
-
-struct callers{
+struct StateCaller{
     SearchState state;
     std::shared_ptr<SearchAction> action;
-    std::shared_ptr<callers> parentState;
+    std::shared_ptr<StateCaller> parentState;
 
+    bool operator<(const StateCaller& other) const {
+        return state < other.state;
+    }
 };
 
 std::vector<SearchAction> BreadthFirstSearch::solve(const SearchState &init_state) {
-    cout << "start" << endl;
 
-    queue<std::shared_ptr<callers>> open;
-    vector<callers> usedCallers;
-    vector<SearchAction> solution;
+    if(init_state.isFinal())
+        return {};
 
-    usedCallers.push_back({init_state, nullptr, nullptr});
-    open.push(std::make_shared<callers>(usedCallers.back()));
+    set<StateCaller> visitedStates;
+    queue<std::shared_ptr<StateCaller>> openQueue;
+    vector<SearchAction> solutionActions;
 
-    bool expand;
+    std::shared_ptr<StateCaller> actualStatePtr;
 
-    while(!open.empty()){
-        auto actualCaller = open.front(); open.pop();
+    // init
+    StateCaller actualState = {init_state, nullptr, nullptr};
+    visitedStates.insert(actualState);
+    openQueue.push(std::make_shared<StateCaller>(actualState));
 
-        // check if the selected element is final
-        if(actualCaller->state.isFinal()){
+    while(!openQueue.empty()){
+        actualStatePtr = openQueue.front(); openQueue.pop();
 
-            cout << "je final" << endl;
-
-#ifdef PRINT_BOARD
-            SearchState in_progress(actualCaller->state);
-            std::cout << "### Starting Position ###" << std::endl;
-    std::cout << in_progress << std::endl;
-    std::cout << "#########################" << std::endl << std::endl;
-#endif // PRINT_BOARD
-
-            while(actualCaller->parentState != nullptr){
-                solution.push_back(*actualCaller->action);
-                actualCaller = actualCaller->parentState;
-            }
-
-            std::reverse( solution.begin(), solution.end() );
-            cout << "solution" << endl;
-            return solution;
-        }
-
-       //cout << "1" << endl;
-
-        // check theirs followers
-        for(const auto& action: actualCaller->state.actions()){
-//            callers newCaller = {newState, }
-            auto newState = action.execute(actualCaller->state);
+        // check its followers
+        for(const auto& action: actualStatePtr->state.actions()){
+            actualState = {action.execute(actualStatePtr->state), std::make_shared<SearchAction>(action),
+                    actualStatePtr};
 
             // check if the selected element is final
-            if(newState.isFinal()){
-                cout << "je final" << endl;
+            if(actualState.state.isFinal()){
+                actualStatePtr = std::make_shared<StateCaller>(actualState);
 
-                usedCallers.push_back({newState, std::make_shared<SearchAction>(action), actualCaller});
-                actualCaller = std::make_shared<callers>(usedCallers.back());
-
-                while(actualCaller->parentState != nullptr){
-                    solution.emplace_back(*actualCaller->action);
-                    actualCaller = actualCaller->parentState;
+                while(actualStatePtr->parentState != nullptr){
+                    solutionActions.emplace_back(*actualStatePtr->action);
+                    actualStatePtr = actualStatePtr->parentState;
                 }
 
-                std::reverse( solution.begin(), solution.end() );
-                cout << "solution" << endl;
-                return solution;
+                std::reverse( solutionActions.begin(), solutionActions.end() );
+                return solutionActions;
             }
 
-            bool visited = std::any_of(usedCallers.begin(), usedCallers.end(),
-                                       [newState](auto cal) { return cal.state == newState; }
-            );
-
-            if(!visited){
-                usedCallers.push_back({std::move(newState), std::make_shared<SearchAction>(action), actualCaller});
-                open.push(std::make_shared<callers>(usedCallers.back()));
+            // check whether the state is visited
+            if(visitedStates.find(actualState) == visitedStates.end()){
+                visitedStates.insert(actualState);
+                openQueue.push(std::make_shared<StateCaller>(actualState));
             }
         }
     }
-
-    cout << "empty solution" << endl;
-
     return {};
-
-
 }
 
 std::vector<SearchAction> DepthFirstSearch::solve(const SearchState &init_state) {
