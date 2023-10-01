@@ -7,7 +7,7 @@
 #if LOGGING
 #define LOG_MOVE(_a)                                 \
     do {                                             \
-        std::cout << _a << std::endl;                \
+        std::cout << "[" << _a << "]" << std::endl;  \
     } while (0)
 #else
 #define LOG_MOVE(_a) ;
@@ -16,7 +16,7 @@
 #if PRINT_BOARD
 #define LOG_BOARD(_s)                                \
     do {                                             \
-        std::cout << "[" << _s << "]" << std::endl;  \
+        std::cout << _s << std::endl;  \
     } while (0)
 #else
 #define LOG_BOARD(_s) ;
@@ -58,8 +58,7 @@ void reconstructPath(std::unordered_map<std::shared_ptr<SearchState>,
     // we iterate it until we get the first state (parent_state == nullptr)
     // we collect all the actions and store it in the given `solution` vector
     while (curr.first != nullptr) {
-        solution.push_back(*curr.second);
-        // solution.insert(solution.begin(), *curr.second);
+        solution.insert(solution.begin(), *curr.second);
         curr = moves[curr.first];
     }
 }
