@@ -5,22 +5,15 @@
 #include <iterator>
 
 #if LOGGING
-#define LOG_MOVE(_a)                                 \
+#define LOG_MOVE(_a, _pref, _suf)                    \
     do {                                             \
-        std::cout << "[" << _a << "]" << std::endl;  \
+        std::cout << _pref << "[" << _a << "]" << _suf << std::endl;  \
     } while (0)
-#else
-#define LOG_MOVE(_a) ;
+#define LOG_BOARD(_s, _pref, _suf)                      \
+    do {                                                \
+        std::cout << _pref << _s << _suf << std::endl;  \
+    } while (0)
 #endif // LOGGING
-
-#if PRINT_BOARD
-#define LOG_BOARD(_s)                                \
-    do {                                             \
-        std::cout << _s << std::endl;  \
-    } while (0)
-#else
-#define LOG_BOARD(_s) ;
-#endif // PRINT_BOARD
 
 bool operator==(const SearchState &a, const SearchState &b) {
     return a.state_ == b.state_;
@@ -39,19 +32,67 @@ DepthFirstSearch::solve(const SearchState &init_state) {
 }
 
 double StudentHeuristic::distanceLowerBound(const GameState &state) const {
-    (void)state;
-    return 0;
+    // distance = non_homes + card_steps_from_home
+    // card_steps_from_home == how deep is the follow-up card in the stack
+    // 1h 5c 4d == 2
+    std::unordered_map<Color, int> cards_from_home{
+        {Color::Heart, 0},
+        {Color::Diamond, 0},
+        {Color::Club, 0},
+        {Color::Spade, 0}
+    };
+    // cards at home
+    double distance = king_value * colors_list.size();
+    for (const auto &home : state.homes) {
+        auto opt_top = home.topCard();
+        if (opt_top.has_value()) {
+            cards_from_home[opt_top->color] = opt_top->value;
+            distance -= opt_top->value;
+        } else {
+        }
+    }
+
+    // number of cards blocking next rank card in the stack
+    for (const auto &p : cards_from_home) {
+        if (p.second == king_value)
+            continue;
+        Card curr_card(p.first, p.second + 1);
+        for (auto &s : state.stacks) {
+            if (s.storage().size() == 0)
+                continue;
+            auto storage = s.storage();
+            auto it = std::find_if(storage.begin(), storage.end(),
+                    [curr_card](const Card &a) { return a == curr_card; });
+            // card not found in this stack
+            if (it == storage.end())
+                continue;
+            distance += storage.size() - (it - storage.begin());
+            break;
+        }
+    }
+
+    return distance;
 }
 
 double compute_heuristic(const SearchState &state, const AStarHeuristicItf &heuristic);
 
+/**
+ * @brief Reconstruct the path from start to finish.
+ *
+ * This function populates `solution` vector with the list of action
+ * to get from the initial state to the final state. `moves` collection contains
+ * mapping between a destination state and the pair of <source state, selected action>.
+ *
+ * @param moves      Map that stores possible actions [dst] <- <stc, act>
+ * @param finalState The final state of the game.
+ * @param solution   Reference of the action vector.
+ */
 void reconstructPath(std::unordered_map<std::shared_ptr<SearchState>,
         std::pair<std::shared_ptr<SearchState>, std::shared_ptr<SearchAction>>> &moves,
         const std::shared_ptr<SearchState> &finalState,
         std::vector<SearchAction> &solution) {
 
-    std::pair<std::shared_ptr<SearchState>,
-              std::shared_ptr<SearchAction>> curr = moves[finalState];
+    auto curr = moves[finalState];
     // reconstructing the path by back tracking
     // the map `moves` contains [child_state] -> <parent_state, action>
     // each parent state is a child state of the successor
@@ -63,8 +104,15 @@ void reconstructPath(std::unordered_map<std::shared_ptr<SearchState>,
     }
 }
 
+/**
+ * @brief Solving the game from initial state using A* algorithm.
+ *
+ * @param init_state Initial state.
+ * @return Vector of action to get from the initial to final state.
+ */
 std::vector<SearchAction> AStarSearch::solve(const SearchState &init_state) {
     using namespace std;
+    // int iter = 0;
     // set of (un)visited states
     vector<shared_ptr<SearchState>> open;
     vector<shared_ptr<SearchState>> close;
@@ -77,7 +125,7 @@ std::vector<SearchAction> AStarSearch::solve(const SearchState &init_state) {
     unordered_map<shared_ptr<SearchState>,
         pair<shared_ptr<SearchState>, shared_ptr<SearchAction>>> moves;
 
-    // init the structure
+    // init all structures/collections
     shared_ptr<SearchState> curr_state = make_shared<SearchState>(init_state);
     gscore[curr_state] = 0;
     fscore[curr_state] = compute_heuristic(*curr_state, *heuristic_);
@@ -104,6 +152,25 @@ std::vector<SearchAction> AStarSearch::solve(const SearchState &init_state) {
         // pop the state with the lowest f-score from the OPEN vector
         curr_state = *min_it;
         open.erase(min_it);
+
+#if 0
+        iter++;
+        auto m = moves[curr_state];
+        auto act = m.second;
+        auto src = m.first;
+        LOG_BOARD(*curr_state, "DST:" << std::endl, "---" << std::endl);
+        cout << "iter: " << iter << endl << "---" << endl;
+        if (act == nullptr) {
+            LOG_MOVE("", "ACTION: ", std::endl << "---");
+        } else {
+            LOG_MOVE(*act, "ACTION: ", std::endl << "---");
+        }
+        if (src == nullptr) {
+            LOG_BOARD("null" << std::endl, "SRC:" << std::endl, "#" << std::endl);
+        } else {
+            LOG_BOARD(*src, "SRC:" << std::endl, "#" << std::endl);
+        }
+#endif
 
         // check for final state
         if (curr_state->isFinal()) {
