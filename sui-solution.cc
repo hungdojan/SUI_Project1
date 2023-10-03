@@ -1,9 +1,12 @@
 #include "search-strategies.h"
+#include "memusage.h"
 
 #include <queue>
 #include <algorithm>
 #include <set>
 #include <iostream>
+
+#define GB 1024 * 1024 * 1024
 
 using namespace std;
 
@@ -35,6 +38,11 @@ std::vector<SearchAction> BreadthFirstSearch::solve(const SearchState &init_stat
 
     while(!openQueue.empty()){
         actualStatePtr = openQueue.front(); openQueue.pop();
+
+        // memory watch
+        if (getCurrentRSS() + actualStatePtr->state.actions().size() * sizeof(StateCaller) > GB){
+            return {};
+        }
 
         // check its followers
         for(const auto& action: actualStatePtr->state.actions()){
