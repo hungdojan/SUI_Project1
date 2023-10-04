@@ -6,14 +6,14 @@
 #include <set>
 #include <iostream>
 
-#define GB 1024 * 1024 * 1024
-
 using namespace std;
 
 struct StateCaller{
     SearchState state;
-    std::shared_ptr<SearchAction> action;
-    std::shared_ptr<StateCaller> parentState;
+    std::shared_ptr<SearchAction> action = nullptr;
+    std::shared_ptr<StateCaller> parentState = nullptr;
+
+    int depthLevel = 0;
 
     bool operator<(const StateCaller& other) const {
         return state < other.state;
@@ -32,7 +32,7 @@ std::vector<SearchAction> BreadthFirstSearch::solve(const SearchState &init_stat
     std::shared_ptr<StateCaller> actualStatePtr;
 
     // init
-    StateCaller actualState = {init_state, nullptr, nullptr};
+    StateCaller actualState = {init_state};
     visitedStates.insert(actualState);
     openQueue.push(std::make_shared<StateCaller>(actualState));
 
@@ -40,7 +40,7 @@ std::vector<SearchAction> BreadthFirstSearch::solve(const SearchState &init_stat
         actualStatePtr = openQueue.front(); openQueue.pop();
 
         // memory watch
-        if (getCurrentRSS() + actualStatePtr->state.actions().size() * sizeof(StateCaller) > GB){
+        if (getCurrentRSS() + actualStatePtr->state.actions().size() * sizeof(StateCaller) >= mem_limit_){
             return {};
         }
 
