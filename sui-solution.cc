@@ -1,4 +1,5 @@
 #include "search-strategies.h"
+#include "memusage.h"
 
 #include <queue>
 #include <algorithm>
@@ -19,6 +20,11 @@ struct StateCaller{
         return state < other.state;
     }
 };
+
+std::vector<SearchAction> BreadthFirstSearch::solve(const SearchState &init_state) {
+    return {};
+}
+
 
 std::vector<SearchAction> DepthFirstSearch::solve(const SearchState &init_state) {
 
