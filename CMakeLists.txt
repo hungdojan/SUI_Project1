@@ -3,12 +3,10 @@ cmake_minimum_required(VERSION 3.10)
 project(fc-sui)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -O2")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -g")
 set(CMAKE_EXPORT_COMPILE_COMMANDS YES)
 
 # debug flags
-# can be used in the file
-# see fc-sui.cc:30
-add_compile_definitions(PRINT_BOARD=1)
 add_compile_definitions(LOGGING=1)
 
 add_executable(fc-sui ${CMAKE_CURRENT_SOURCE_DIR}/fc-sui.cc)
