@@ -25,9 +25,6 @@
 #define LOG_BOARD(_s, _pref, _suf)  ;
 #endif // LOGGING
 
-typedef std::shared_ptr<SearchState> SearchStatePtr;
-double compute_heuristic(const SearchState &state, const AStarHeuristicItf &heuristic);
-
 std::vector<SearchAction>
 BreadthFirstSearch::solve(const SearchState &init_state) {
     (void)init_state;
@@ -82,6 +79,9 @@ double StudentHeuristic::distanceLowerBound(const GameState &state) const {
     return distance;
 }
 
+
+double compute_heuristic(const SearchState &state, const AStarHeuristicItf &heuristic);
+
 /**
  * @brief Reconstruct the path from start to finish.
  *
@@ -93,9 +93,9 @@ double StudentHeuristic::distanceLowerBound(const GameState &state) const {
  * @param finalState The final state of the game.
  * @param solution   Reference of the action vector.
  */
-void reconstructPath(std::unordered_map<SearchStatePtr,
-        std::pair<SearchStatePtr, std::shared_ptr<SearchAction>>> &moves,
-        const SearchStatePtr &finalState,
+void reconstructPath(std::unordered_map<std::shared_ptr<SearchState>,
+        std::pair<std::shared_ptr<SearchState>, std::shared_ptr<SearchAction>>> &moves,
+        const std::shared_ptr<SearchState> &finalState,
         std::vector<SearchAction> &solution) {
 
     auto curr = moves[finalState];
@@ -117,7 +117,7 @@ void reconstructPath(std::unordered_map<SearchStatePtr,
  * @return Vector of action to get from the initial to final state.
  */
 std::vector<SearchAction> AStarSearch::solve(const SearchState &init_state) {
-    using namespace std;
+    // using namespace std;
 
     // check final state
     if (init_state.isFinal()) {
@@ -127,40 +127,41 @@ std::vector<SearchAction> AStarSearch::solve(const SearchState &init_state) {
     // priority queue for states
     // we want to select a SearchState with lowest f-score
     // the queue accepts a pair <f-score ; SearchStatePtr>
-    priority_queue<pair<double, SearchStatePtr>,
-                   vector<pair<double, SearchStatePtr>>,
-                   greater<pair<double, SearchStatePtr>>> pq_open;
+    std::priority_queue<std::pair<double, std::shared_ptr<SearchState>>,
+                        std::vector<std::pair<double, std::shared_ptr<SearchState>>>,
+                        std::greater<std::pair<double, std::shared_ptr<SearchState>>>> pq_open;
     // set of already visited states
-    set<SearchState> close;
+    // std::set<SearchState> closed;
     // set of g-scores (number of steps from init_position)
-    map<SearchState, double> gscore;
+    std::map<SearchState, double> gscore;
     // map of transitions [dsc] -> <src, Action>
-    unordered_map<SearchStatePtr,
-        pair<SearchStatePtr, shared_ptr<SearchAction>>> moves;
+    std::unordered_map<std::shared_ptr<SearchState>,
+        std::pair<std::shared_ptr<SearchState>, std::shared_ptr<SearchAction>>> moves;
 
     // init all structures/collections
-    SearchStatePtr currStatePtr = make_shared<SearchState>(init_state);
+    std::shared_ptr<SearchState> currStatePtr = std::make_shared<SearchState>(init_state);
     gscore[init_state] = 0;
-    pq_open.push(make_pair(compute_heuristic(init_state, *heuristic_),
-                 currStatePtr));
-    moves[currStatePtr] = make_pair(nullptr, nullptr);
+    pq_open.emplace(compute_heuristic(init_state, *heuristic_), currStatePtr);
+    moves[currStatePtr] = std::make_pair(nullptr, nullptr);
 
     while (!pq_open.empty()) {
         // pop a state with the lowest f-score from the queue
-        pair<double, SearchStatePtr> top = pq_open.top(); pq_open.pop();
+        const std::pair<double, std::shared_ptr<SearchState>> top = pq_open.top(); pq_open.pop();
+        using namespace std;
         currStatePtr = top.second;
 
         // iterate over elements
         for (const SearchAction &action : currStatePtr->actions()) {
-            SearchStatePtr next = make_shared<SearchState>(action.execute(*currStatePtr));
+            const SearchState next = action.execute(*currStatePtr);
+            const std::shared_ptr<SearchState> nextPtr = std::make_shared<SearchState>(next);
 
             // check for final state
-            if (next->isFinal()) {
-                vector<SearchAction> actions;
-                moves[next] = make_pair(currStatePtr, make_shared<SearchAction>(action));
+            if (next.isFinal()) {
+                std::vector<SearchAction> actions;
+                moves[nextPtr] = std::make_pair(currStatePtr, std::make_shared<SearchAction>(action));
 
                 // generate a path
-                reconstructPath(moves, next, actions);
+                reconstructPath(moves, nextPtr, actions);
                 return actions;
             }
 
@@ -170,18 +171,17 @@ std::vector<SearchAction> AStarSearch::solve(const SearchState &init_state) {
             }
 
             double nextGscore = gscore[*currStatePtr] + 1;
-            set<SearchState>::iterator closedIt = close.find(*next);
-            if (closedIt != close.end()) {
+            // auto closedIt = closed.find(next);
+            auto closedIt = gscore.find(next);
+            if (closedIt != gscore.end()) {
                 // skip states that has already been visited but are further from the init_state
-                if (nextGscore <= gscore[*next]) continue;
-            } else {
-                close.insert(*next);
+                if (nextGscore >= gscore[next]) continue;
             }
             // update the next state
             // store transition, g-score and push next state to priority queue
-            moves[next] = make_pair(currStatePtr, make_shared<SearchAction>(action));
-            gscore[*next] = nextGscore;
-            pq_open.push(make_pair(compute_heuristic(*next, *heuristic_) + nextGscore, next));
+            moves[nextPtr] = std::make_pair(currStatePtr, std::make_shared<SearchAction>(action));
+            gscore[next] = nextGscore;
+            pq_open.emplace(compute_heuristic(next, *heuristic_) + nextGscore, nextPtr);
         }
     }
     return {};

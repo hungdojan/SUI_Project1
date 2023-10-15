@@ -5,7 +5,7 @@ std::ostream& operator<< (std::ostream& os, const StrategyEvaluation &report) {
         os << "Solved " << report.nb_solved << " / " << report.nb_solved + report.nb_failed <<
             " [ " << 100.0*report.nb_solved / (report.nb_solved + report.nb_failed) << " % ]. " <<
             "Avg solution length " << 1.0 * report.total_solution_length / report.nb_solved << " steps, "
-            "Avg time taken: " << (report.time_taken / report.nb_solved).count() << " us " <<
+            "Avg time taken: " << (report.time_taken / report.nb_solved).count() / 1000000.0 << " s " <<
             "Total #states expaned: " << report.nb_states_expanded << 
             "\n";
     } else {

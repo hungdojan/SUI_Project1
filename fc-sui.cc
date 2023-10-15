@@ -15,6 +15,7 @@
 #include <thread>
 #include <atomic>
 
+#include <malloc.h>
 
 void eval_strategy(
         std::unique_ptr<SearchStrategyItf> &search_strategy,
@@ -25,6 +26,9 @@ void eval_strategy(
     auto t0 = std::chrono::steady_clock::now();
 	auto solution = search_strategy->solve(init_state);
     auto t1 = std::chrono::steady_clock::now();
+    if (solution.empty()) {
+        malloc_trim(0);
+    }
 
 	SearchState in_progress(init_state);
 	for (const auto & action : solution) {
