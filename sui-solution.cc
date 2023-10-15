@@ -1,6 +1,7 @@
 #include "search-strategies.h"
 #include "memusage.h"       // getCurrentRSS
 #include "card.h"           // Card
+#include "card-storage.h"   // HomeDestination
 #include <set>              // std::set
 #include <unordered_map>    // std::map, std::unordered_map
 #include <algorithm>        // std::find
@@ -49,12 +50,12 @@ double StudentHeuristic::distanceLowerBound(const GameState &state) const {
     };
     // cards at home
     double distance = king_value * colors_list.size();
-    for (const auto &home : state.homes) {
-        auto opt_top = home.topCard();
+    for (const HomeDestination &home : state.homes) {
+        const std::optional<Card> opt_top = home.topCard();
         if (opt_top.has_value()) {
             cards_from_home[opt_top->color] = opt_top->value;
             distance -= opt_top->value;
-        } else { }
+        }
     }
 
     // number of cards blocking next rank card in the stack
@@ -65,7 +66,7 @@ double StudentHeuristic::distanceLowerBound(const GameState &state) const {
         for (auto &s : state.stacks) {
             if (s.storage().size() == 0)
                 continue;
-            auto storage = s.storage();
+            const std::vector<Card> storage = s.storage();
             auto it = std::find(storage.begin(), storage.end(), curr_card);
 
             // card not found in this stack
@@ -80,6 +81,7 @@ double StudentHeuristic::distanceLowerBound(const GameState &state) const {
 }
 
 
+typedef std::shared_ptr<SearchState> SearchStatePtr;
 double compute_heuristic(const SearchState &state, const AStarHeuristicItf &heuristic);
 
 /**
@@ -93,12 +95,12 @@ double compute_heuristic(const SearchState &state, const AStarHeuristicItf &heur
  * @param finalState The final state of the game.
  * @param solution   Reference of the action vector.
  */
-void reconstructPath(std::unordered_map<std::shared_ptr<SearchState>,
-        std::pair<std::shared_ptr<SearchState>, std::shared_ptr<SearchAction>>> &moves,
-        const std::shared_ptr<SearchState> &finalState,
+void reconstructPath(std::unordered_map<SearchStatePtr,
+        std::pair<SearchStatePtr, std::shared_ptr<SearchAction>>> &moves,
+        const SearchStatePtr &finalState,
         std::vector<SearchAction> &solution) {
 
-    auto curr = moves[finalState];
+    std::pair<SearchStatePtr, std::shared_ptr<SearchAction>> curr = moves[finalState];
     // reconstructing the path by back tracking
     // the map `moves` contains [child_state] -> <parent_state, action>
     // each parent state is a child state of the successor
@@ -127,38 +129,42 @@ std::vector<SearchAction> AStarSearch::solve(const SearchState &init_state) {
     // priority queue for states
     // we want to select a SearchState with lowest f-score
     // the queue accepts a pair <f-score ; SearchStatePtr>
-    std::priority_queue<std::pair<double, std::shared_ptr<SearchState>>,
-                        std::vector<std::pair<double, std::shared_ptr<SearchState>>>,
-                        std::greater<std::pair<double, std::shared_ptr<SearchState>>>> pq_open;
-    // set of already visited states
-    // std::set<SearchState> closed;
+    std::priority_queue<std::pair<double, SearchStatePtr>,
+                        std::vector<std::pair<double, SearchStatePtr>>,
+                        std::greater<std::pair<double, SearchStatePtr>>> pq_open;
+
     // set of g-scores (number of steps from init_position)
+    // this set also represents a close collection; visited states will have a gscore value
     std::map<SearchState, double> gscore;
     // map of transitions [dsc] -> <src, Action>
-    std::unordered_map<std::shared_ptr<SearchState>,
-        std::pair<std::shared_ptr<SearchState>, std::shared_ptr<SearchAction>>> moves;
+    std::unordered_map<SearchStatePtr,
+                       std::pair<SearchStatePtr, std::shared_ptr<SearchAction>>> moves;
 
     // init all structures/collections
-    std::shared_ptr<SearchState> currStatePtr = std::make_shared<SearchState>(init_state);
+    SearchStatePtr currStatePtr = std::make_shared<SearchState>(init_state);
     gscore[init_state] = 0;
-    pq_open.emplace(compute_heuristic(init_state, *heuristic_), currStatePtr);
+    pq_open.push(std::make_pair(compute_heuristic(init_state, *heuristic_), currStatePtr));
     moves[currStatePtr] = std::make_pair(nullptr, nullptr);
+
+    // temp variables
+    SearchStatePtr nextPtr = nullptr;
+    double nextGscore = 0;
 
     while (!pq_open.empty()) {
         // pop a state with the lowest f-score from the queue
-        const std::pair<double, std::shared_ptr<SearchState>> top = pq_open.top(); pq_open.pop();
-        using namespace std;
+        const std::pair<double, SearchStatePtr> top = pq_open.top(); pq_open.pop();
         currStatePtr = top.second;
 
         // iterate over elements
         for (const SearchAction &action : currStatePtr->actions()) {
             const SearchState next = action.execute(*currStatePtr);
-            const std::shared_ptr<SearchState> nextPtr = std::make_shared<SearchState>(next);
+            nextPtr = std::make_shared<SearchState>(next);
 
             // check for final state
             if (next.isFinal()) {
                 std::vector<SearchAction> actions;
-                moves[nextPtr] = std::make_pair(currStatePtr, std::make_shared<SearchAction>(action));
+                moves[nextPtr] = std::make_pair(currStatePtr,
+                                                std::make_shared<SearchAction>(action));
 
                 // generate a path
                 reconstructPath(moves, nextPtr, actions);
@@ -170,18 +176,20 @@ std::vector<SearchAction> AStarSearch::solve(const SearchState &init_state) {
                 return {};
             }
 
-            double nextGscore = gscore[*currStatePtr] + 1;
-            // auto closedIt = closed.find(next);
-            auto closedIt = gscore.find(next);
+            nextGscore = gscore[*currStatePtr] + 1;
+            std::map<SearchState, double>::iterator closedIt = gscore.find(next);
+            // skip states that has already been visited but are further from the init_state
             if (closedIt != gscore.end()) {
-                // skip states that has already been visited but are further from the init_state
-                if (nextGscore >= gscore[next]) continue;
+                // uncomment line of code below to find the shortest path
+                // if (nextGscore >= gscore[next]) continue;
+                // uncomment line of code below to speed up the algorithm
+                continue;
             }
             // update the next state
             // store transition, g-score and push next state to priority queue
             moves[nextPtr] = std::make_pair(currStatePtr, std::make_shared<SearchAction>(action));
             gscore[next] = nextGscore;
-            pq_open.emplace(compute_heuristic(next, *heuristic_) + nextGscore, nextPtr);
+            pq_open.push(std::make_pair(compute_heuristic(next, *heuristic_) + nextGscore, nextPtr));
         }
     }
     return {};
