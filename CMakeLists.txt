@@ -7,7 +7,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -O2")
 set(CMAKE_EXPORT_COMPILE_COMMANDS YES)
 
 # debug flags
-add_compile_definitions(LOGGING=1)
+add_compile_definitions(LOGGING=0)
 
 add_executable(fc-sui ${CMAKE_CURRENT_SOURCE_DIR}/fc-sui.cc)
 target_sources(fc-sui PUBLIC
