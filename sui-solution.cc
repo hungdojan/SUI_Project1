@@ -112,6 +112,15 @@ void reconstructPath(std::unordered_map<SearchStatePtr,
     }
 }
 
+/** Comparator function for priority queue */
+class PqCompare {
+public:
+    bool operator()(const std::pair<double, SearchStatePtr> &a,
+                    const std::pair<double, SearchStatePtr> &b) {
+        return a.first > b.first;
+    }
+};
+
 /**
  * @brief Solving the game from initial state using A* algorithm.
  *
@@ -119,8 +128,6 @@ void reconstructPath(std::unordered_map<SearchStatePtr,
  * @return Vector of action to get from the initial to final state.
  */
 std::vector<SearchAction> AStarSearch::solve(const SearchState &init_state) {
-    // using namespace std;
-
     // check final state
     if (init_state.isFinal()) {
         return {};
@@ -131,7 +138,7 @@ std::vector<SearchAction> AStarSearch::solve(const SearchState &init_state) {
     // the queue accepts a pair <f-score ; SearchStatePtr>
     std::priority_queue<std::pair<double, SearchStatePtr>,
                         std::vector<std::pair<double, SearchStatePtr>>,
-                        std::greater<std::pair<double, SearchStatePtr>>> pq_open;
+                        PqCompare> pq_open;
 
     // set of g-scores (number of steps from init_position)
     // this set also represents a close collection; visited states will have a gscore value
@@ -154,11 +161,26 @@ std::vector<SearchAction> AStarSearch::solve(const SearchState &init_state) {
         // pop a state with the lowest f-score from the queue
         const std::pair<double, SearchStatePtr> top = pq_open.top(); pq_open.pop();
         currStatePtr = top.second;
+        // memory check
+        if (getCurrentRSS() + 50*1024*1024 > mem_limit_) {
+            return {};
+        }
 
         // iterate over elements
         for (const SearchAction &action : currStatePtr->actions()) {
             const SearchState next = action.execute(*currStatePtr);
             nextPtr = std::make_shared<SearchState>(next);
+
+            std::map<SearchState, double>::iterator closedIt = gscore.find(next);
+            // skip states that has already been visited but are further from the init_state
+            if (closedIt != gscore.end()) {
+                // uncomment line of code below to find the shortest path
+                // if (nextGscore >= gscore[next]) continue;
+                // uncomment line of code below to speed up the algorithm
+                continue;
+            }
+
+            nextGscore = gscore[*currStatePtr] + 1;
 
             // check for final state
             if (next.isFinal()) {
@@ -171,20 +193,6 @@ std::vector<SearchAction> AStarSearch::solve(const SearchState &init_state) {
                 return actions;
             }
 
-            // memory check
-            if (getCurrentRSS() + 50*1024*1024 > mem_limit_) {
-                return {};
-            }
-
-            nextGscore = gscore[*currStatePtr] + 1;
-            std::map<SearchState, double>::iterator closedIt = gscore.find(next);
-            // skip states that has already been visited but are further from the init_state
-            if (closedIt != gscore.end()) {
-                // uncomment line of code below to find the shortest path
-                // if (nextGscore >= gscore[next]) continue;
-                // uncomment line of code below to speed up the algorithm
-                continue;
-            }
             // update the next state
             // store transition, g-score and push next state to priority queue
             moves[nextPtr] = std::make_pair(currStatePtr, std::make_shared<SearchAction>(action));
