@@ -6,11 +6,12 @@
 #include <set>
 #include <stack>
 #include <iostream>
-
+#include <ctime>
+#include <random>
 using namespace std;
 
 struct StateCaller{
-    SearchState state;
+    std::shared_ptr<SearchState> state = nullptr;
     std::shared_ptr<SearchAction> action = nullptr;
     std::shared_ptr<StateCaller> parentState = nullptr;
 
@@ -25,40 +26,42 @@ std::vector<SearchAction> BreadthFirstSearch::solve(const SearchState &init_stat
     return {};
 }
 
-
-std::vector<SearchAction> DepthFirstSearch::solve(const SearchState &init_state) {
-
+std::vector<SearchAction> DepthFirstSearch::solve(const SearchState &init_state){
     if(init_state.isFinal()) return {};
 
-    set<StateCaller> visitedStates;
     stack<std::shared_ptr<StateCaller>> openStack;
     vector<SearchAction> solutionActions;
 
     std::shared_ptr<StateCaller> actualStatePtr;
+    std::shared_ptr<StateCaller> newStatePtr;
     std::shared_ptr<int> actualDepth;
 
     // init
-    StateCaller actualState = {init_state};
-    visitedStates.insert(actualState);
-    openStack.push(std::make_shared<StateCaller>(actualState));
+    openStack.push(std::make_shared<StateCaller>(StateCaller{std::make_shared<SearchState>(init_state)}));
 
     while(!openStack.empty()){
         actualStatePtr = openStack.top(); openStack.pop();
         actualDepth = std::make_shared<int>(actualStatePtr->depthLevel);
 
-        // memory watch
-        if (getCurrentRSS() + actualStatePtr->state.actions().size() * sizeof(StateCaller) > mem_limit_){
+        // memory watcher
+        if (getCurrentRSS() + 50 * 1024 * 1024 > mem_limit_){
             return {};
         }
 
-        // check its followers
-        for(const auto& action: actualStatePtr->state.actions()){
-            actualState = {action.execute(actualStatePtr->state), std::make_shared<SearchAction>(action),
-                           actualStatePtr, *actualDepth + 1};
+        // random access to vector
+        auto actions = std::make_shared<vector<SearchAction>>(actualStatePtr->state->actions());
+        std::vector<int> ind(actions->size());
+        std::iota(ind.begin(), ind.end(), 0);
+        std::random_shuffle(ind.begin(), ind.end());
 
-            // check if the selected element is final
-            if(actualState.state.isFinal()){
-                actualStatePtr = std::make_shared<StateCaller>(actualState);
+        for(auto& i: ind){
+            std::shared_ptr<SearchAction> action = std::make_shared<SearchAction>((*actions)[i]);
+            newStatePtr = std::make_shared<StateCaller>(StateCaller{std::make_shared<SearchState>(action->execute(*actualStatePtr->state)), action,
+                           actualStatePtr, *actualDepth + 1});
+
+            // check whether the new node is final
+            if(newStatePtr->state->isFinal()){
+                actualStatePtr = newStatePtr;
 
                 while(actualStatePtr->parentState != nullptr){
                     solutionActions.emplace_back(*actualStatePtr->action);
@@ -71,16 +74,10 @@ std::vector<SearchAction> DepthFirstSearch::solve(const SearchState &init_state)
 
             // max depth
             if(*actualDepth + 1 < depth_limit_){
-
-                // check whether the state is visited
-                if(visitedStates.find(actualState) == visitedStates.end()){
-                    visitedStates.insert(actualState);
-                    openStack.push(std::make_shared<StateCaller>(actualState));
-                }
+                openStack.push(newStatePtr);
             }
         }
     }
-
     return {};
 }
 
