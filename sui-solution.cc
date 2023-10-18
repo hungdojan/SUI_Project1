@@ -10,14 +10,14 @@
 #include <random>
 using namespace std;
 
-struct StateCaller{
+struct StateCallerDFS{
     std::shared_ptr<SearchState> state = nullptr;
     std::shared_ptr<SearchAction> action = nullptr;
-    std::shared_ptr<StateCaller> parentState = nullptr;
+    std::shared_ptr<StateCallerDFS> parentState = nullptr;
 
     int depthLevel = 0;
 
-    bool operator<(const StateCaller& other) const {
+    bool operator<(const StateCallerDFS& other) const {
         return state < other.state;
     }
 };
@@ -29,15 +29,15 @@ std::vector<SearchAction> BreadthFirstSearch::solve(const SearchState &init_stat
 std::vector<SearchAction> DepthFirstSearch::solve(const SearchState &init_state){
     if(init_state.isFinal()) return {};
 
-    stack<std::shared_ptr<StateCaller>> openStack;
+    stack<std::shared_ptr<StateCallerDFS>> openStack;
     vector<SearchAction> solutionActions;
 
-    std::shared_ptr<StateCaller> actualStatePtr;
-    std::shared_ptr<StateCaller> newStatePtr;
+    std::shared_ptr<StateCallerDFS> actualStatePtr;
+    std::shared_ptr<StateCallerDFS> newStatePtr;
     std::shared_ptr<int> actualDepth;
 
     // init
-    openStack.push(std::make_shared<StateCaller>(StateCaller{std::make_shared<SearchState>(init_state)}));
+    openStack.push(std::make_shared<StateCallerDFS>(StateCallerDFS{std::make_shared<SearchState>(init_state)}));
 
     while(!openStack.empty()){
         actualStatePtr = openStack.top(); openStack.pop();
@@ -56,7 +56,7 @@ std::vector<SearchAction> DepthFirstSearch::solve(const SearchState &init_state)
 
         for(auto& i: ind){
             std::shared_ptr<SearchAction> action = std::make_shared<SearchAction>((*actions)[i]);
-            newStatePtr = std::make_shared<StateCaller>(StateCaller{std::make_shared<SearchState>(action->execute(*actualStatePtr->state)), action,
+            newStatePtr = std::make_shared<StateCallerDFS>(StateCallerDFS{std::make_shared<SearchState>(action->execute(*actualStatePtr->state)), action,
                            actualStatePtr, *actualDepth + 1});
 
             // check whether the new node is final
