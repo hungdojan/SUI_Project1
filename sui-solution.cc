@@ -13,8 +13,6 @@ struct StateCallerBFS{
     std::shared_ptr<SearchAction> action = nullptr;
     std::shared_ptr<StateCallerBFS> parentState = nullptr;
 
-    int depthLevel = 0;
-
     bool operator<(const StateCallerBFS& other) const {
         return state < other.state;
     }
