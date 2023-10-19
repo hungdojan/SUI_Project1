@@ -13,29 +13,29 @@ add_compile_definitions(DEBUG_INFO=0)
 
 add_executable(fc-sui ${CMAKE_CURRENT_SOURCE_DIR}/fc-sui.cc)
 target_sources(fc-sui PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/card.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/card-storage.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/evaluation-type.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/game.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/memusage.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/mem_watch.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/move.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/search-interface.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/strategies-provided.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/sui-solution.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/card.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/card-storage.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/evaluation-type.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/game.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/memusage.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/mem_watch.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/move.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/search-interface.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/strategies-provided.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/sui-solution.cc
 )
 
 add_executable(test-bin ${CMAKE_CURRENT_SOURCE_DIR}/test-main.cc)
 target_sources(test-bin PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/test.cc)
 target_sources(test-bin PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/card.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/card-storage.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/evaluation-type.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/game.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/memusage.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/mem_watch.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/move.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/search-interface.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/strategies-provided.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/sui-solution.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/card.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/card-storage.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/evaluation-type.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/game.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/memusage.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/mem_watch.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/move.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/search-interface.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/strategies-provided.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/sui-solution.cc
 )
