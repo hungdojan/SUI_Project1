@@ -64,7 +64,7 @@ std::vector<SearchAction> SearchState::actions() const {
 		state_.non_homes.end(),
 		state_.all_storage.begin(),
 		state_.all_storage.end()
-	);	
+	);
 
 	std::vector<SearchAction> moves;
 	std::transform(

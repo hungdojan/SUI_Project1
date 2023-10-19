@@ -21,18 +21,18 @@ void eval_strategy(
         std::unique_ptr<SearchStrategyItf> &search_strategy,
         const SearchState &init_state,
         StrategyEvaluation *report
-    ) {
+) {
 
     auto t0 = std::chrono::steady_clock::now();
-	auto solution = search_strategy->solve(init_state);
+    auto solution = search_strategy->solve(init_state);
     auto t1 = std::chrono::steady_clock::now();
     if (solution.empty()) {
         malloc_trim(0);
     }
 
-	SearchState in_progress(init_state);
-	for (const auto & action : solution) {
-		in_progress = action.execute(in_progress);
+    SearchState in_progress(init_state);
+    for (const auto & action : solution) {
+        in_progress = action.execute(in_progress);
     }
 
     if (in_progress.isFinal()) {
@@ -62,7 +62,7 @@ std::unique_ptr<AStarHeuristicItf> getHeuristic(const argparse::ArgumentParser &
     if (heuristic_name == "nb_not_home") {
         return std::make_unique<OufOfHome_Pseudo>();
     } else if (heuristic_name == "student") {
-	    return std::make_unique<StudentHeuristic>();
+        return std::make_unique<StudentHeuristic>();
     } else {
         std::cerr << "Unknown heuristic name '" << heuristic_name << "'\n";
         std::cerr << "Supported are: nb_not_home, student\n";
@@ -76,7 +76,7 @@ std::unique_ptr<SearchStrategyItf> getSolver(const argparse::ArgumentParser &par
     if (solver_name == "dummy") {
         return std::make_unique<DummySearch>(500, 5);
     } else if (solver_name == "bfs") {
-	    return std::make_unique<BreadthFirstSearch>(parser.get<size_t>("--mem-limit"));
+        return std::make_unique<BreadthFirstSearch>(parser.get<size_t>("--mem-limit"));
     } else if (solver_name == "dfs") {
         return std::make_unique<DepthFirstSearch>(parser.get<int>("--dls-limit"), parser.get<size_t>("--mem-limit"));
     } else if (solver_name == "a_star") {
