@@ -34,12 +34,6 @@ bool SearchState::execute(Location from, Location to) {
 
     SearchState::nb_expanded++;
 
-//    std::cout << "Homes: " << state_.homes.size() << std::endl;
-//    std::cout << "Free cells: " << state_.free_cells.size() << std::endl;
-//    std::cout << "Stack: " << state_.stacks.size() << std::endl;
-//
-//    std::cout << "Non homes: " << state_.non_homes.size() << std::endl;
-//    std::cout << "All storage: " << state_.all_storage.size() << std::endl;
 	return true;
 }
 
@@ -70,7 +64,7 @@ std::vector<SearchAction> SearchState::actions() const {
 		state_.non_homes.end(),
 		state_.all_storage.begin(),
 		state_.all_storage.end()
-	);	
+	);
 
 	std::vector<SearchAction> moves;
 	std::transform(
