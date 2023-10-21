@@ -4,14 +4,15 @@
 #include "card-storage.h"   // HomeDestination
 
 #include <queue>            // std::priority_queue, std::queue
-#include <algorithm>        // std::find
+#include <algorithm>        // std::find, std::shuffle
 #include <unordered_map>    // std::map, std::unordered_map
 #include <iterator>         // ::iterator
 #include <set>              // std::set
 #include <stack>	        // std::stack
 #include <vector>           // std::vector
 #include <ctime>
-#include <random>
+#include <random>           // std::default_random_engine
+#include <chrono>           // std::chrono::system_clock
 
 #define _RESERVE 50*1024*1024   // 50MB
 
@@ -55,6 +56,23 @@ struct StateCallerBFS{
     }
 };
 
+/**
+ * @brief Generates random order of indices.
+ *
+ * @param size Size of the array.
+ * @return Vector of indices.
+ */
+std::vector<int> shuffle_indices(size_t size) {
+    // init vector
+    std::vector<int> ind(size);
+    std::iota(ind.begin(), ind.end(), 0);
+
+    // shuffle content
+    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+    std::shuffle(ind.begin(), ind.end(), std::default_random_engine(seed));
+    return ind;
+}
+
 std::vector<SearchAction> BreadthFirstSearch::solve(const SearchState &init_state) {
     if(init_state.isFinal()) return {};
 
@@ -79,12 +97,12 @@ std::vector<SearchAction> BreadthFirstSearch::solve(const SearchState &init_stat
 
         // random access to vector
         auto actions = std::make_shared<std::vector<SearchAction>>(actualStatePtr->state.actions());
-        std::vector<int> ind(actions->size());
-        std::iota(ind.begin(), ind.end(), 0);
-        std::random_shuffle(ind.begin(), ind.end());
+        // std::vector<int> ind(actions->size());
+        // std::iota(ind.begin(), ind.end(), 0);
+        // std::random_shuffle(ind.begin(), ind.end());
 
         // check its followers
-        for(auto& i: ind){
+        for(auto& i: shuffle_indices(actions->size())){
             std::shared_ptr<SearchAction> action = std::make_shared<SearchAction>((*actions)[i]);
             newStatePtr = std::make_shared<StateCallerBFS>(StateCallerBFS{action->execute(actualStatePtr->state), action,
                                                                     actualStatePtr});
