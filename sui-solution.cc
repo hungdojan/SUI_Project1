@@ -1,3 +1,14 @@
+/**
+ * @brief Implementation of BFS, DFS and A* algorithms
+ *
+ * This source code serves as the submission to our SUI assigment
+ * at FIT, BUT 2023/24.
+ *
+ * @file    sui-solution.cc
+ * @authors Hung Do
+ *          Lenka Sokova
+ * @date    22/10/2023
+ */
 #include "search-strategies.h"
 #include "memusage.h"       // getCurrentRSS
 #include "card.h"           // Card
@@ -10,9 +21,7 @@
 #include <set>              // std::set
 #include <stack>	        // std::stack
 #include <vector>           // std::vector
-#include <ctime>
-#include <random>           // std::default_random_engine
-#include <chrono>           // std::chrono::system_clock
+#include <random>           // std::mt19937, random_device
 
 #define _RESERVE 50*1024*1024   // 50MB
 
@@ -68,8 +77,7 @@ std::vector<int> shuffle_indices(size_t size) {
     std::iota(ind.begin(), ind.end(), 0);
 
     // shuffle content
-    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-    std::shuffle(ind.begin(), ind.end(), std::default_random_engine(seed));
+    std::shuffle(ind.begin(), ind.end(), std::mt19937{std::random_device{}()});
     return ind;
 }
 
@@ -97,9 +105,6 @@ std::vector<SearchAction> BreadthFirstSearch::solve(const SearchState &init_stat
 
         // random access to vector
         auto actions = std::make_shared<std::vector<SearchAction>>(actualStatePtr->state.actions());
-        // std::vector<int> ind(actions->size());
-        // std::iota(ind.begin(), ind.end(), 0);
-        // std::random_shuffle(ind.begin(), ind.end());
 
         // check its followers
         for(auto& i: shuffle_indices(actions->size())){
@@ -155,11 +160,8 @@ std::vector<SearchAction> DepthFirstSearch::solve(const SearchState &init_state)
 
         // random access to vector
         auto actions = std::make_shared<std::vector<SearchAction>>(actualStatePtr->state->actions());
-        std::vector<int> ind(actions->size());
-        std::iota(ind.begin(), ind.end(), 0);
-        std::random_shuffle(ind.begin(), ind.end());
 
-        for(auto& i: ind){
+        for(auto& i: shuffle_indices(actions->size())){
             std::shared_ptr<SearchAction> action = std::make_shared<SearchAction>((*actions)[i]);
             newStatePtr = std::make_shared<StateCallerDFS>(StateCallerDFS{std::make_shared<SearchState>(action->execute(*actualStatePtr->state)), action,
                            actualStatePtr, *actualDepth + 1});
