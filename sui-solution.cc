@@ -1,17 +1,27 @@
+/**
+ * @brief Implementation of BFS, DFS and A* algorithms
+ *
+ * This source code serves as the submission to our SUI assigment
+ * at FIT, BUT 2023/24.
+ *
+ * @file    sui-solution.cc
+ * @authors Hung Do
+ *          Lenka Sokova
+ * @date    22/10/2023
+ */
 #include "search-strategies.h"
 #include "memusage.h"       // getCurrentRSS
 #include "card.h"           // Card
 #include "card-storage.h"   // HomeDestination
 
 #include <queue>            // std::priority_queue, std::queue
-#include <algorithm>        // std::find
+#include <algorithm>        // std::find, std::shuffle
 #include <unordered_map>    // std::map, std::unordered_map
 #include <iterator>         // ::iterator
 #include <set>              // std::set
 #include <stack>	        // std::stack
 #include <vector>           // std::vector
-#include <ctime>
-#include <random>
+#include <random>           // std::mt19937, random_device
 
 #define _RESERVE 50*1024*1024   // 50MB
 
@@ -55,6 +65,22 @@ struct StateCallerBFS{
     }
 };
 
+/**
+ * @brief Generates random order of indices.
+ *
+ * @param size Size of the array.
+ * @return Vector of indices.
+ */
+std::vector<int> shuffle_indices(size_t size) {
+    // init vector
+    std::vector<int> ind(size);
+    std::iota(ind.begin(), ind.end(), 0);
+
+    // shuffle content
+    std::shuffle(ind.begin(), ind.end(), std::mt19937{std::random_device{}()});
+    return ind;
+}
+
 std::vector<SearchAction> BreadthFirstSearch::solve(const SearchState &init_state) {
     if(init_state.isFinal()) return {};
 
@@ -79,12 +105,9 @@ std::vector<SearchAction> BreadthFirstSearch::solve(const SearchState &init_stat
 
         // random access to vector
         auto actions = std::make_shared<std::vector<SearchAction>>(actualStatePtr->state.actions());
-        std::vector<int> ind(actions->size());
-        std::iota(ind.begin(), ind.end(), 0);
-        std::random_shuffle(ind.begin(), ind.end());
 
         // check its followers
-        for(auto& i: ind){
+        for(auto& i: shuffle_indices(actions->size())){
             std::shared_ptr<SearchAction> action = std::make_shared<SearchAction>((*actions)[i]);
             newStatePtr = std::make_shared<StateCallerBFS>(StateCallerBFS{action->execute(actualStatePtr->state), action,
                                                                     actualStatePtr});
@@ -137,11 +160,8 @@ std::vector<SearchAction> DepthFirstSearch::solve(const SearchState &init_state)
 
         // random access to vector
         auto actions = std::make_shared<std::vector<SearchAction>>(actualStatePtr->state->actions());
-        std::vector<int> ind(actions->size());
-        std::iota(ind.begin(), ind.end(), 0);
-        std::random_shuffle(ind.begin(), ind.end());
 
-        for(auto& i: ind){
+        for(auto& i: shuffle_indices(actions->size())){
             std::shared_ptr<SearchAction> action = std::make_shared<SearchAction>((*actions)[i]);
             newStatePtr = std::make_shared<StateCallerDFS>(StateCallerDFS{std::make_shared<SearchState>(action->execute(*actualStatePtr->state)), action,
                            actualStatePtr, *actualDepth + 1});
